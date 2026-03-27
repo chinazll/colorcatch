@@ -1,0 +1,25 @@
+{
+  "name": "colorcatch",
+  "version": "1.0.0",
+  "description": "Color Catch - 糖果跳跳乐 | A candy-colored platformer game",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
+    "lint": "echo \"No linter configured\""
+  },
+  "keywords": [
+    "game",
+    "html5",
+    "canvas",
+    "platformer",
+    "candy",
+    "colorful"
+  ],
+  "author": "chinazll",
+  "license": "MIT",
+  "devDependencies": {
+    "vite": "^5.4.0"
+  }
+}
