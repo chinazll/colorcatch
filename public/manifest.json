@@ -2,14 +2,14 @@
   "name": "Color Catch - 糖果跳跳乐",
   "short_name": "ColorCatch",
   "description": "A candy-colored platformer game with combos and particle effects",
-  "start_url": "/",
+  "start_url": "/colorcatch/",
   "display": "standalone",
   "background_color": "#87CEEB",
   "theme_color": "#FF6B6B",
   "orientation": "portrait",
   "icons": [
     {
-      "src": "/screenshots/screenshot-menu.png",
+      "src": "/colorcatch/screenshots/screenshot-menu.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"
