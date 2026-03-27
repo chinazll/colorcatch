@@ -9,6 +9,16 @@ buildscript {
         classpath 'com.android.tools.build:gradle:8.2.2'
         classpath 'com.google.gms:google-services:4.4.4'
     }
+    configurations.classpath {
+        resolutionStrategy {
+            eachDependency { details ->
+                if (details.requested.group == 'org.bouncycastle') {
+                    details.useVersion '1.72'
+                    details.because 'Java 21 bytecode not supported by Gradle 8.2 ASM'
+                }
+            }
+        }
+    }
 }
 
 apply from: "variables.gradle"
@@ -23,6 +33,7 @@ allprojects {
             eachDependency { details ->
                 if (details.requested.group == 'org.bouncycastle') {
                     details.useVersion '1.72'
+                    details.because 'Java 21 bytecode not supported by Gradle 8.2 ASM'
                 }
             }
         }
