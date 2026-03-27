@@ -35,26 +35,18 @@ jobs:
 
       - name: Build APK
         run: |
-          # Patch bcprov JAR: remove Java 21 entries to fix Gradle 8.2 ASM incompatibility
-          BCProv_PATH=$(find ~/.gradle/caches/modules-2/files-2.1/org.bouncycastle/bcprov-jdk18on/1.79 -name "*.jar" 2>/dev/null | head -1)
-          if [ -f "$BCProv_PATH" ]; then
-            echo "Patching bcprov JAR: $BCProv_PATH"
-            cd $(dirname "$BCProv_PATH")
-            cp "$BCProv_PATH" bcprov-backup.jar
-            mkdir -p /tmp/bcprov-patch && cd /tmp/bcprov-patch
-            unzip -q bcprov-backup.jar
-            find . -name "*.class" -path "*/21/*" -delete
-            rm -f bcprov-backup.jar
-            zip -qr -9 ../bcprov-fixed.jar .
-            cp bcprov-fixed.jar "$BCProv_PATH"
-            echo "bcprov patched successfully"
-          else
-            echo "bcprov JAR not found, skipping patch"
-          fi
-          # Build APK
           cd android
           chmod +x gradlew
-          ./gradlew assembleDebug -PversionCode=${{ github.run_number }} --no-daemon
+          # Clean bouncycastle from all Gradle caches to avoid Java 21 bytecode issue
+          find ~/.gradle/caches -name "*bcprov*" -type f -delete 2>/dev/null || true
+          find ~/.gradle/caches -name "*bouncycastle*" -type f -delete 2>/dev/null || true
+          ./gradlew assembleDebug -PversionCode=${{ github.run_number }} --no-daemon 2>&1 | tee /tmp/gradle-output.txt
+          if [ -f app/build/outputs/apk/debug/app-debug.apk ]; then
+            echo "APK built successfully"
+          else
+            echo "Build failed - last 30 lines:"
+            tail -30 /tmp/gradle-output.txt
+          fi
 
       - name: Upload APK
         uses: actions/upload-artifact@v4

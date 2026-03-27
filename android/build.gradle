@@ -2,10 +2,6 @@
 
 buildscript {
     repositories {
-        maven { url 'https://maven.aliyun.com/repository/google' }
-        maven { url 'https://maven.aliyun.com/repository/central' }
-        maven { url 'https://maven.aliyun.com/repository/public' }
-        maven { url 'https://maven.aliyun.com/repository/gradle-plugin' }
         google()
         mavenCentral()
     }
@@ -18,19 +14,15 @@ buildscript {
 apply from: "variables.gradle"
 
 allprojects {
+    repositories {
+        google()
+        mavenCentral()
+    }
     configurations.all {
         resolutionStrategy {
             force 'org.bouncycastle:bcprov-jdk18on:1.72'
             force 'org.bouncycastle:bcpkix-jdk18on:1.72'
         }
-        exclude group: 'org.bouncycastle'
-    }
-    repositories {
-        maven { url 'https://maven.aliyun.com/repository/google' }
-        maven { url 'https://maven.aliyun.com/repository/central' }
-        maven { url 'https://maven.aliyun.com/repository/public' }
-        google()
-        mavenCentral()
     }
 }
 
