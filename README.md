@@ -2,7 +2,7 @@
 
 > A candy-colored vertical platformer. Match colors to score, ride the combo wave!
 
-![Color Catch Screenshot](public/screenshots/gameplay.png)
+![Color Catch Screenshot](public/screenshots/screenshot-gameplay.png)
 
 ---
 
