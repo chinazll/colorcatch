@@ -35,6 +35,23 @@ jobs:
 
       - name: Build APK
         run: |
+          # Patch bcprov JAR: remove Java 21 entries to fix Gradle 8.2 ASM incompatibility
+          BCProv_PATH=$(find ~/.gradle/caches/modules-2/files-2.1/org.bouncycastle/bcprov-jdk18on/1.79 -name "*.jar" 2>/dev/null | head -1)
+          if [ -f "$BCProv_PATH" ]; then
+            echo "Patching bcprov JAR: $BCProv_PATH"
+            cd $(dirname "$BCProv_PATH")
+            cp "$BCProv_PATH" bcprov-backup.jar
+            mkdir -p /tmp/bcprov-patch && cd /tmp/bcprov-patch
+            unzip -q bcprov-backup.jar
+            find . -name "*.class" -path "*/21/*" -delete
+            rm -f bcprov-backup.jar
+            zip -qr -9 ../bcprov-fixed.jar .
+            cp bcprov-fixed.jar "$BCProv_PATH"
+            echo "bcprov patched successfully"
+          else
+            echo "bcprov JAR not found, skipping patch"
+          fi
+          # Build APK
           cd android
           chmod +x gradlew
           ./gradlew assembleDebug -PversionCode=${{ github.run_number }} --no-daemon
