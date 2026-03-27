@@ -10,8 +10,8 @@ buildscript {
         maven { url 'https://maven.aliyun.com/repository/public' }
     }
     dependencies {
-        classpath 'com.android.tools.build:gradle:8.2.2'
-        classpath 'com.google.gms:google-services:4.4.4'
+        classpath 'com.android.tools.build:gradle:8.6.0'
+        classpath 'com.google.gms:google-services:4.4.0'
 
         // NOTE: Do not place your application dependencies here; they belong
         // in the individual module build.gradle files
@@ -27,6 +27,17 @@ allprojects {
         maven { url 'https://maven.aliyun.com/repository/google' }
         maven { url 'https://maven.aliyun.com/repository/central' }
         maven { url 'https://maven.aliyun.com/repository/public' }
+    }
+    configurations.all {
+        resolutionStrategy {
+            force 'androidx.core:core:1.12.0'
+            force 'androidx.core:core-ktx:1.12.0'
+            force 'androidx.activity:activity:1.8.2'
+            force 'androidx.activity:activity-ktx:1.8.2'
+            force 'androidx.core:core-splashscreen:1.0.1'
+            force 'androidx.fragment:fragment:1.6.2'
+            force 'androidx.appcompat:appcompat:1.6.1'
+        }
     }
 }
 
