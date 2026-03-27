@@ -9,6 +9,22 @@ buildscript {
         classpath 'com.android.tools.build:gradle:8.2.2'
         classpath 'com.google.gms:google-services:4.4.4'
     }
+    configurations.classpath {
+        resolutionStrategy {
+            eachDependency { details ->
+                if (details.requested.group == 'org.bouncycastle') {
+                    // Redirect any jdk15on to jdk18on (jdk15on 1.72 was never published)
+                    if (details.requested.name.contains('jdk15on')) {
+                        details.useTarget group: 'org.bouncycastle',
+                            name: details.requested.name.replace('jdk15on', 'jdk18on'),
+                            version: details.requested.version
+                    }
+                    // Force all bouncycastle to 1.72 (compatible with Java 8 bytecode in Gradle 8.2 ASM)
+                    details.useVersion '1.72'
+                }
+            }
+        }
+    }
 }
 
 apply from: "variables.gradle"
@@ -18,11 +34,18 @@ allprojects {
         google()
         mavenCentral()
     }
-    // Force ALL bouncycastle to 1.72 (only jdk18on exists, jdk15on 1.72 never published)
     configurations.all {
         resolutionStrategy {
-            force 'org.bouncycastle:bcprov-jdk18on:1.72'
-            force 'org.bouncycastle:bcpkix-jdk18on:1.72'
+            eachDependency { details ->
+                if (details.requested.group == 'org.bouncycastle') {
+                    if (details.requested.name.contains('jdk15on')) {
+                        details.useTarget group: 'org.bouncycastle',
+                            name: details.requested.name.replace('jdk15on', 'jdk18on'),
+                            version: details.requested.version
+                    }
+                    details.useVersion '1.72'
+                }
+            }
         }
     }
 }
