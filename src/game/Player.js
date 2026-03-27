@@ -12,13 +12,13 @@ export const COLORS = {
 };
 
 export class Player {
-  constructor(x, y) {
+  constructor(x, y, initialColorKey = null) {
     this.x = x;
     this.y = y;
     this.r = 18;
     this.vx = 0;
     this.vy = 0;
-    this.colorKey = COLOR_KEYS[Math.floor(Math.random() * COLOR_KEYS.length)];
+    this.colorKey = initialColorKey !== null ? initialColorKey : COLOR_KEYS[Math.floor(Math.random() * COLOR_KEYS.length)];
     this.color = COLORS[this.colorKey];
     this.onGround = false;
     this.alive = true;

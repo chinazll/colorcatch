@@ -75,8 +75,8 @@ export class Game {
     groundPlat.animScale = 1;
     this.platforms.push(groundPlat);
 
-    // 玩家
-    this.player = new Player(this.W / 2, this.H - 80 - 20);
+    // 玩家 — 初始颜色与地面平台一致，避免开局颜色不匹配立即死亡
+    this.player = new Player(this.W / 2, this.H - 80 - 20, COLOR_KEYS[0]);
 
     // 生成初始平台
     for (let i = 0; i < 8; i++) {

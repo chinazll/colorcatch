@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">ColorCatch</string>
-    <string name="title_activity_main">ColorCatch</string>
+    <string name="app_name">糖果跳跳乐</string>
+    <string name="title_activity_main">糖果跳跳乐</string>
     <string name="package_name">com.colorcatch.game</string>
     <string name="custom_url_scheme">com.colorcatch.game</string>
 </resources>
