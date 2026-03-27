@@ -11,10 +11,18 @@ buildscript {
     }
     configurations.classpath {
         resolutionStrategy {
-            eachDependency { details ->
+            eachDependency { DependencyResolveDetails details ->
                 if (details.requested.group == 'org.bouncycastle') {
-                    details.useVersion '1.72'
-                    details.because 'Java 21 bytecode not supported by Gradle 8.2 ASM'
+                    def name = details.requested.name
+                    def version = details.requested.version
+                    // Replace any jdk15on artifact with jdk18on 1.72
+                    if (name.contains('jdk15on')) {
+                        details.because 'redirect to compatible jdk18on version'
+                        details.useVersion '1.72'
+                        details.useTarget group: 'org.bouncycastle',
+                            name: name.replace('jdk15on', 'jdk18on'),
+                            version: '1.72'
+                    }
                 }
             }
         }
@@ -30,10 +38,14 @@ allprojects {
     }
     configurations.all {
         resolutionStrategy {
-            eachDependency { details ->
+            eachDependency { DependencyResolveDetails details ->
                 if (details.requested.group == 'org.bouncycastle') {
-                    details.useVersion '1.72'
-                    details.because 'Java 21 bytecode not supported by Gradle 8.2 ASM'
+                    def name = details.requested.name
+                    if (name.contains('jdk15on')) {
+                        details.useTarget group: 'org.bouncycastle',
+                            name: name.replace('jdk15on', 'jdk18on'),
+                            version: '1.72'
+                    }
                 }
             }
         }
