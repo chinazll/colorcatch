@@ -20,8 +20,11 @@ allprojects {
     }
     configurations.all {
         resolutionStrategy {
-            force 'org.bouncycastle:bcprov-jdk18on:1.72'
-            force 'org.bouncycastle:bcpkix-jdk18on:1.72'
+            eachDependency { details ->
+                if (details.requested.group == 'org.bouncycastle') {
+                    details.useVersion '1.72'
+                }
+            }
         }
     }
 }
