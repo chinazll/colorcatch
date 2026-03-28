@@ -1,137 +1,128 @@
 /**
- * GloryPlayer.js - 糖果战士
- * 永动弹球物理 + 紫色发光球体 + 呼吸光环 + 拖尾
+ * GloryPlayer.js - Glory Candy glowing bouncing player
+ * Elastic ball physics: GRAVITY, BOUNCE=0.95, MIN_VY=-10保证永动
  */
-
-export class GloryPlayer {
+class GloryPlayer {
   constructor(x, y) {
     this.x = x;
     this.y = y;
-    this.vx = 0;
-    this.vy = -12; // JUMP_SPEED
-
-    // 物理参数
-    this.GRAVITY   = 0.35;
-    this.JUMP_SPEED = -12;
-    this.BOUNCE    = 0.95;
-    this.MIN_VY    = -10;  // 保证最低弹跳速度，防止能量衰减使游戏停止
-    this.FRICTION  = 0.985;
-    this.MAX_VX    = 12;
-
     this.radius = 14;
-    this.direction = null; // 'left' | 'right' | null
-
-    // 冷却
-    this._lastDirTime = 0;
-    this._dirCooldown = 100; // ms
-
-    // 呼吸光环
-    this._breathPhase = 0;
-    this._breathPeriod = 1500; // ms
-
-    // 拖尾
-    this.trail = [];
-    this._maxTrail = 12;
+    this.vx = 0;
+    this.vy = -12; // initial jump upward
+    this.GRAVITY = 0.35;
+    this.BOUNCE = 0.95;
+    this.FRICTION = 0.985;
+    this.MAX_VX = 12;
+    this.MIN_VY = -10; // 保证每次弹跳都有足够的向上速度
+    this.trail = []; // [{x,y}] last N positions
+    this.breathPhase = 0;
+    this.squash = 1;
   }
 
-  setDirection(dir) {
-    const now = Date.now();
-    if (now - this._lastDirTime < this._dirCooldown) return;
-    this._lastDirTime = now;
+  update(dt, platforms) {
+    // Store trail
+    this.trail.push({ x: this.x, y: this.y });
+    if (this.trail.length > 12) this.trail.shift();
 
-    if (dir === 'left') {
-      this.vx -= 4.5;
-    } else if (dir === 'right') {
-      this.vx += 4.5;
-    }
-    // Clamp
-    this.vx = Math.max(-this.MAX_VX, Math.min(this.MAX_VX, this.vx));
-  }
+    // Gravity
+    this.vy += this.GRAVITY * dt * 60;
 
-  update(dt, platforms, W) {
-    // 重力
-    this.vy += this.GRAVITY;
+    // Friction
+    this.vx *= Math.pow(this.FRICTION, dt * 60);
 
-    // 摩擦
-    this.vx *= this.FRICTION;
+    // Position
+    this.x += this.vx * dt * 60;
+    this.y += this.vy * dt * 60;
 
-    // 位置更新
-    this.x += this.vx;
-    this.y += this.vy;
+    // Wall collision
+    const W = 400;
+    if (this.x < this.radius) { this.x = this.radius; this.vx = Math.abs(this.vx); }
+    if (this.x > W - this.radius) { this.x = W - this.radius; this.vx = -Math.abs(this.vx); }
 
-    // 平台碰撞
-    for (const plat of platforms) {
-      if (plat.collidesWith(this)) {
-        this.vy = Math.max(this.MIN_VY, -Math.abs(this.vy) * this.BOUNCE);
-        this.y = plat.y - this.radius;
-        return { bounced: true, x: this.x, y: this.y };
+    // Platform collision (top only, falling)
+    if (this.vy > 0) {
+      for (const plat of platforms) {
+        if (!plat) continue;
+        const inX = this.x + this.radius > plat.x && this.x - this.radius < plat.x + plat.width;
+        const atTop = this.y + this.radius >= plat.y && this.y + this.radius <= plat.y + 18;
+        if (inX && atTop) {
+          this.y = plat.y - this.radius;
+          // BOUNCE=0.95保证永不停止, MIN_VY=-10保证最低弹起速度
+          this.vy = Math.max(this.MIN_VY, -Math.abs(this.vy) * this.BOUNCE);
+          this.squash = 0.7;
+          return 'bounce';
+        }
       }
     }
 
-    // 边界水平反弹
-    if (this.x - this.radius < 0) {
-      this.x = this.radius;
-      this.vx = Math.abs(this.vx) * 0.5;
-    }
-    if (this.x + this.radius > W) {
-      this.x = W - this.radius;
-      this.vx = -Math.abs(this.vx) * 0.5;
-    }
+    // Squash/stretch animation recovery
+    this.squash += (1 - this.squash) * 0.2;
+    this.breathPhase += 0.04 * dt * 60;
 
-    // 拖尾更新
-    this.trail.unshift({ x: this.x, y: this.y });
-    if (this.trail.length > this._maxTrail) {
-      this.trail.pop();
-    }
-
-    return { bounced: false };
+    return null;
   }
 
-  draw(ctx) {
-    const { x, y, radius } = this;
+  setDirection(dir) {
+    if (dir === 'left') {
+      this.vx = Math.max(-this.MAX_VX, this.vx - 4.5);
+    } else if (dir === 'right') {
+      this.vx = Math.min(this.MAX_VX, this.vx + 4.5);
+    }
+  }
 
-    // 拖尾
-    for (let i = this.trail.length - 1; i >= 0; i--) {
+  draw(ctx, camY) {
+    const sx = this.x;
+    const sy = this.y - camY;
+    const breathAlpha = 0.3 + Math.abs(Math.sin(this.breathPhase)) * 0.4;
+
+    // Trail
+    for (let i = 0; i < this.trail.length; i++) {
       const t = this.trail[i];
-      const alpha = (1 - i / this.trail.length) * 0.4;
-      const size = radius * (1 - i / this.trail.length) * 0.8;
+      const alpha = (i / this.trail.length) * 0.4;
+      const size = this.radius * (i / this.trail.length) * 0.8;
       ctx.save();
       ctx.globalAlpha = alpha;
       ctx.beginPath();
-      ctx.arc(t.x, t.y, size, 0, Math.PI * 2);
-      ctx.fillStyle = '#8A2BE2';
+      ctx.arc(t.x, t.y - camY, size, 0, Math.PI * 2);
+      ctx.fillStyle = '#BF40FF';
       ctx.fill();
       ctx.restore();
     }
 
     ctx.save();
-    ctx.translate(x, y);
-
-    // 呼吸光环
-    const breathT = ((Date.now() % this._breathPeriod) / this._breathPeriod);
-    const breathAlpha = 0.3 + 0.4 * (0.5 + 0.5 * Math.sin(breathT * Math.PI * 2));
+    // Breathing glow
+    ctx.shadowColor = '#BF40FF';
+    ctx.shadowBlur = 20;
     ctx.globalAlpha = breathAlpha;
     ctx.beginPath();
-    ctx.arc(0, 0, 18, 0, Math.PI * 2);
+    ctx.arc(sx, sy, this.radius + 5, 0, Math.PI * 2);
     ctx.fillStyle = '#BF40FF';
     ctx.fill();
+    ctx.restore();
 
-    // 主体球
-    ctx.globalAlpha = 1;
-    const grad = ctx.createRadialGradient(0, 0, 0, 0, 0, radius);
+    // Squash/stretch body
+    const scaleX = 1 / this.squash;
+    const scaleY = this.squash;
+    ctx.save();
+    ctx.translate(sx, sy);
+    ctx.scale(scaleX, scaleY);
+    const grad = ctx.createRadialGradient(-3, -3, 0, 0, 0, this.radius);
     grad.addColorStop(0, '#BF40FF');
     grad.addColorStop(1, '#8A2BE2');
+    ctx.shadowColor = '#BF40FF';
+    ctx.shadowBlur = 12;
     ctx.beginPath();
-    ctx.arc(0, 0, radius, 0, Math.PI * 2);
+    ctx.arc(0, 0, this.radius, 0, Math.PI * 2);
     ctx.fillStyle = grad;
     ctx.fill();
 
-    // 高光
+    // Eyes
+    ctx.fillStyle = 'rgba(255,255,255,0.9)';
     ctx.beginPath();
-    ctx.arc(-radius * 0.3, -radius * 0.3, radius * 0.35, 0, Math.PI * 2);
-    ctx.fillStyle = 'rgba(255,255,255,0.35)';
+    ctx.arc(-4, -3, 3, 0, Math.PI * 2);
+    ctx.arc(4, -3, 3, 0, Math.PI * 2);
     ctx.fill();
-
     ctx.restore();
   }
 }
+export { GloryPlayer };

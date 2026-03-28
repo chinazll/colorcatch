@@ -1,45 +1,40 @@
 /**
- * GloryBackground.js - 深色星空背景
- * 渲染永夜空渐变背景 + 静态星尘粒子
+ * GloryBackground.js - Glory Candy deep space background
+ * Dark blue gradient + star dust particles
  */
-
-export class GloryBackground {
-  constructor(W, H) {
-    this.W = W;
-    this.H = H;
+class GloryBackground {
+  constructor() {
     this.stars = [];
-    this._generateStars();
-  }
-
-  _generateStars() {
-    const count = 30 + Math.floor(Math.random() * 21); // 30~50
+    const count = 30 + Math.floor(Math.random() * 21);
     for (let i = 0; i < count; i++) {
       this.stars.push({
-        x: Math.random() * this.W,
-        y: Math.random() * this.H,
-        size: 1 + Math.random(),
-        alpha: 0.3 + Math.random() * 0.4,
+        x: Math.random() * 400,
+        y: Math.random() * 10000,
+        size: 1 + Math.random() * 2,
+        alpha: 0.3 + Math.random() * 0.5
       });
     }
   }
 
-  draw(ctx) {
-    // 背景渐变
-    const grad = ctx.createLinearGradient(0, 0, 0, this.H);
+  draw(ctx, camY) {
+    if (!ctx) return;
+    const W = 400;
+    const H = 640;
+    const grad = ctx.createLinearGradient(0, 0, 0, H);
     grad.addColorStop(0, '#0a1628');
     grad.addColorStop(1, '#1a2a4a');
     ctx.fillStyle = grad;
-    ctx.fillRect(0, 0, this.W, this.H);
+    ctx.fillRect(0, 0, W, H);
 
-    // 静态星尘
-    for (const s of this.stars) {
-      ctx.save();
-      ctx.globalAlpha = s.alpha;
-      ctx.fillStyle = '#ffffff';
+    for (const star of this.stars) {
+      const screenY = (star.y - camY * 0.3) % (H + 200);
+      ctx.globalAlpha = star.alpha;
       ctx.beginPath();
-      ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2);
+      ctx.arc(star.x, screenY, star.size, 0, Math.PI * 2);
+      ctx.fillStyle = '#ffffff';
       ctx.fill();
-      ctx.restore();
     }
+    ctx.globalAlpha = 1;
   }
 }
+export { GloryBackground };

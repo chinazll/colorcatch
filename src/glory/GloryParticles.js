@@ -1,142 +1,71 @@
 /**
- * GloryParticles.js - 粒子系统
- * 复用现有 src/game/Particle.js 架构
- * 新增三种粒子类型: bounce, collect_star, trail
+ * GloryParticles.js - Glory Candy particle system
+ * Types: bounce (white sparks), collect_star (gold burst), trail (purple)
  */
-
-export class GloryParticle {
-  constructor(x, y, color, vx, vy, size, life, type = 'circle', gravity = 0.15) {
-    this.x = x;
-    this.y = y;
-    this.color = color;
-    this.vx = vx;
-    this.vy = vy;
-    this.size = size;
-    this.life = life;
-    this.maxLife = life;
-    this.type = type;
-    this.gravity = gravity;
-    this.alpha = 1;
-    this.rotation = Math.random() * Math.PI * 2;
-    this.rotationSpeed = (Math.random() - 0.5) * 0.2;
-  }
-
-  update() {
-    this.x += this.vx;
-    this.y += this.vy;
-    this.vy += this.gravity;
-    this.life--;
-    this.alpha = Math.max(0, this.life / this.maxLife);
-    this.rotation += this.rotationSpeed;
-  }
-
-  draw(ctx) {
-    ctx.save();
-    ctx.globalAlpha = this.alpha;
-    ctx.translate(this.x, this.y);
-    ctx.rotate(this.rotation);
-
-    if (this.type === 'star') {
-      ctx.fillStyle = this.color;
-      this._drawStar(ctx, 0, 0, this.size, this.size * 0.45, 0);
-      ctx.fill();
-    } else {
-      ctx.beginPath();
-      ctx.arc(0, 0, this.size, 0, Math.PI * 2);
-      ctx.fillStyle = this.color;
-      ctx.fill();
-    }
-    ctx.restore();
-  }
-
-  _drawStar(ctx, cx, cy, outer, inner, rotation) {
-    const spikes = 5;
-    ctx.beginPath();
-    for (let i = 0; i < spikes * 2; i++) {
-      const angle = (i * Math.PI) / spikes - Math.PI / 2 + rotation;
-      const r = i % 2 === 0 ? outer : inner;
-      const x = cx + Math.cos(angle) * r;
-      const y = cy + Math.sin(angle) * r;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
-    }
-    ctx.closePath();
-  }
-
-  get alive() {
-    return this.life > 0;
-  }
-}
-
-export class GloryParticles {
+class GloryParticles {
   constructor() {
     this.particles = [];
   }
 
-  _add(p) {
-    this.particles.push(p);
-  }
-
-  // bounce: 平台碰撞火花，白色，8颗，向上喷射，持续 200ms
-  emitBounce(x, y) {
-    for (let i = 0; i < 8; i++) {
-      const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI * 0.8;
-      const speed = 2 + Math.random() * 3;
-      this._add(new GloryParticle(
-        x, y,
-        '#ffffff',
-        Math.cos(angle) * speed,
-        Math.sin(angle) * speed,
-        2 + Math.random() * 2,
-        Math.floor(200 / 16.67), // ~200ms at 60fps
-        'circle',
-        0.1
-      ));
+  emit(x, y, type, extra) {
+    if (type === 'bounce') {
+      for (let i = 0; i < 8; i++) {
+        const angle = -Math.PI / 2 + (Math.random() - 0.5) * Math.PI;
+        const speed = 2 + Math.random() * 3;
+        this.particles.push({
+          x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+          life: 1, maxLife: 12, size: 2 + Math.random() * 2,
+          color: '#ffffff', type
+        });
+      }
+    } else if (type === 'collect_star') {
+      for (let i = 0; i < 12; i++) {
+        const angle = (Math.PI * 2 / 12) * i;
+        const speed = 3 + Math.random() * 2;
+        this.particles.push({
+          x, y, vx: Math.cos(angle) * speed, vy: Math.sin(angle) * speed,
+          life: 1, maxLife: 24, size: 3 + Math.random() * 3,
+          color: '#FFD700', type
+        });
+      }
+    } else if (type === 'trail') {
+      this.particles.push({
+        x, y, vx: 0, vy: 0,
+        life: 1, maxLife: 12, size: 6,
+        color: '#BF40FF', type
+      });
     }
   }
 
-  // collect_star: 星星收集金色爆发，12颗，向外扩散，持续 400ms
-  emitCollectStar(x, y) {
-    for (let i = 0; i < 12; i++) {
-      const angle = (i / 12) * Math.PI * 2;
-      const speed = 3 + Math.random() * 2;
-      this._add(new GloryParticle(
-        x, y,
-        '#FFD700',
-        Math.cos(angle) * speed,
-        Math.sin(angle) * speed,
-        3 + Math.random() * 2,
-        Math.floor(400 / 16.67), // ~400ms
-        'star',
-        0.05
-      ));
-    }
-  }
-
-  // trail: 角色拖尾，紫色渐隐，跟随位置
-  emitTrail(x, y) {
-    this._add(new GloryParticle(
-      x, y,
-      '#BF40FF',
-      (Math.random() - 0.5) * 0.5,
-      (Math.random() - 0.5) * 0.5,
-      6,
-      Math.floor(200 / 16.67),
-      'circle',
-      0
-    ));
-  }
-
-  update() {
+  update(dt) {
+    const decay = 1 / 12;
     this.particles = this.particles.filter(p => {
-      p.update();
-      return p.alive;
+      p.life -= decay * dt * 60;
+      p.x += p.vx * dt * 60;
+      p.y += p.vy * dt * 60;
+      p.vy += 0.05 * dt * 60;
+      return p.life > 0;
     });
+    // Cap at 200
+    if (this.particles.length > 200) {
+      this.particles = this.particles.slice(-200);
+    }
   }
 
-  draw(ctx) {
+  draw(ctx, camY) {
     for (const p of this.particles) {
-      p.draw(ctx);
+      const screenY = p.y - camY;
+      if (screenY < -50 || screenY > 740) continue;
+      ctx.save();
+      ctx.globalAlpha = p.life;
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur = 8;
+      ctx.beginPath();
+      ctx.arc(p.x, screenY, p.size * p.life, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.fill();
+      ctx.restore();
     }
   }
 }
+export { GloryParticles };
