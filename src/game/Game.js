@@ -285,15 +285,15 @@ export class Game {
       }
     }
 
-    // Camera
+    // Camera — ALWAYS lerp so player stays visible (both up AND down)
     if (this.player) {
       const targetScreenY = this.H * PLAYER_SCREEN_RATIO;
       this.targetCamY = this.player.y - targetScreenY;
-      if (this.targetCamY < this.camY) {
-        this.camY = lerp(this.camY, this.targetCamY, CAM_LERP);
-      } else {
-        this.camY = this.targetCamY;
-      }
+      // Camera floor: never scrolls below starting view (keeps ground visible)
+      this.targetCamY = Math.min(this.targetCamY, 0);
+      // Always lerp toward target — smooth in both directions
+      const lerpFactor = (this.targetCamY < this.camY) ? CAM_LERP : 0.1;
+      this.camY = lerp(this.camY, this.targetCamY, lerpFactor);
       if (this.player.y < this.highestY) this.highestY = this.player.y;
     }
 
