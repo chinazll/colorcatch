@@ -8,7 +8,7 @@ class GloryPlayer {
     this.y = y;
     this.radius = 14;
     this.vx = 0;
-    this.vy = -12; // initial jump upward
+    this.vy = 0; // start still, fall onto first platform under gravity
     this.GRAVITY = 0.35;
     this.BOUNCE = 0.95;
     this.FRICTION = 0.985;

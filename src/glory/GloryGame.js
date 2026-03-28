@@ -115,12 +115,12 @@ class GloryGame {
     this.particles = new GloryParticles();
 
     // Initial platforms - spread below and above player for immediate bouncing
-    this.platforms.push(new GloryPlatform(50, H * 0.78, 120)); // under player
-    this.platforms.push(new GloryPlatform(W * 0.5, H * 0.60, 100));
-    this.platforms.push(new GloryPlatform(20, H * 0.44, 90));
-    this.platforms.push(new GloryPlatform(W * 0.6, H * 0.30, 100));
-    this.platforms.push(new GloryPlatform(40, H * 0.16, 110));
-    this.platforms.push(new GloryPlatform(W * 0.55, H * 0.02, 90));
+    this.platforms.push(new GloryPlatform(50, H * 0.80, 120)); // under player
+    this.platforms.push(new GloryPlatform(W * 0.5, H * 0.62, 100));
+    this.platforms.push(new GloryPlatform(20, H * 0.46, 90));
+    this.platforms.push(new GloryPlatform(W * 0.6, H * 0.32, 100));
+    this.platforms.push(new GloryPlatform(40, H * 0.18, 110));
+    this.platforms.push(new GloryPlatform(W * 0.55, H * 0.04, 90));
     // Stars on initial platforms
     for (const plat of this.platforms) {
       if (Math.random() < 0.6) {
