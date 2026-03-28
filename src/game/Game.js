@@ -285,14 +285,15 @@ export class Game {
       }
     }
 
-    // Camera — ALWAYS lerp so player stays visible (both up AND down)
+    // Camera — lerp toward target; hard-floor after lerp so camera never scrolls below start
     if (this.player) {
       const targetScreenY = this.H * PLAYER_SCREEN_RATIO;
       this.targetCamY = this.player.y - targetScreenY;
-      // Camera floor: never scrolls below starting view (keeps ground visible)
-      this.targetCamY = Math.min(this.targetCamY, 0);
-      // Always lerp toward target — smooth in both directions
-      this.camY = lerp(this.camY, this.targetCamY, CAM_LERP);
+      // Use flooredTarget as lerp destination (allows upward following)
+      const flooredTarget = Math.min(this.targetCamY, 0);
+      this.camY = lerp(this.camY, flooredTarget, CAM_LERP);
+      // Hard floor: camera can never scroll below starting position
+      if (this.camY > 0) this.camY = 0;
       if (this.player.y < this.highestY) this.highestY = this.player.y;
     }
 
