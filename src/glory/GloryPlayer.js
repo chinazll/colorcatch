@@ -1,6 +1,6 @@
 /**
  * GloryPlayer.js - Glory Candy glowing bouncing player
- * Elastic ball physics: GRAVITY, BOUNCE=0.95, MIN_VY=-10保证永动
+ * Doodle Jump style: tap = jump, gravity = fall, bounce on platform
  */
 class GloryPlayer {
   constructor(x, y, W = 400) {
@@ -9,15 +9,27 @@ class GloryPlayer {
     this.W = W;
     this.radius = 14;
     this.vx = 0;
-    this.vy = 0; // start still, fall onto first platform under gravity
-    this.GRAVITY = 0.35;
-    this.BOUNCE = 0.95;
+    this.vy = 0;
+    this.GRAVITY = 0.45;      // fall speed
+    this.JUMP_VY = -13;       // jump impulse (negative = upward)
+    this.BOUNCE = 0.0;        // no auto-bounce, only player-triggered jumps
     this.FRICTION = 0.985;
     this.MAX_VX = 12;
-    this.MIN_VY = -10; // 保证每次弹跳都有足够的向上速度
-    this.trail = []; // [{x,y}] last N positions
+    this.trail = [];
     this.breathPhase = 0;
     this.squash = 1;
+    this.onGround = false;
+  }
+
+  jump() {
+    // Can jump only when on ground (or recently landed)
+    if (this.onGround) {
+      this.vy = this.JUMP_VY;
+      this.onGround = false;
+      this.squash = 1.4; // stretch on jump
+      return true;
+    }
+    return false;
   }
 
   update(dt, platforms) {
@@ -25,11 +37,11 @@ class GloryPlayer {
     this.trail.push({ x: this.x, y: this.y });
     if (this.trail.length > 12) this.trail.shift();
 
-    // Clamp dt to avoid physics explosion on tab-switch or lag frames
+    // Clamp dt to avoid physics explosion on tab-switch / lag frames
     dt = Math.min(dt, 0.05);
 
-    // Capture position BEFORE this frame's physics update
-    const prevY = this.y;
+    // Assume NOT on ground until collision proves otherwise
+    this.onGround = false;
 
     // Gravity
     this.vy += this.GRAVITY * dt * 60;
@@ -41,32 +53,30 @@ class GloryPlayer {
     this.x += this.vx * dt * 60;
     this.y += this.vy * dt * 60;
 
-    // Wall collision
+    // Wall bounce
     const W = 400;
-    if (this.x < this.radius) { this.x = this.radius; this.vx = Math.abs(this.vx); }
-    if (this.x > W - this.radius) { this.x = W - this.radius; this.vx = -Math.abs(this.vx); }
+    if (this.x < this.radius) { this.x = this.radius; this.vx = Math.abs(this.vx) * 0.5; }
+    if (this.x > W - this.radius) { this.x = W - this.radius; this.vx = -Math.abs(this.vx) * 0.5; }
 
-    // Platform collision - only when player's feet CROSS the platform surface from ABOVE
-    // prevFeetY: feet position BEFORE this frame's physics
-    // curFeetY: feet position AFTER this frame's physics
-    const prevFeetY = prevY + this.radius;
-    const curFeetY = this.y + this.radius;
+    // Platform collision - only when falling (vy > 0) and feet cross platform from above
     for (const plat of platforms) {
       if (!plat) continue;
       const inX = this.x + this.radius > plat.x && this.x - this.radius < plat.x + plat.width;
-      // Collision: prev feet were ABOVE platform, cur feet are AT or BELOW platform top
-      const crossedFromAbove = prevFeetY < plat.y && curFeetY >= plat.y;
-      if (inX && crossedFromAbove) {
+      const feetY = this.y + this.radius;
+      const prevFeetY = feetY - this.vy * dt * 60;
+      // Crossed from above: prev feet above platform top, current feet at or below
+      const crossedFromAbove = prevFeetY < plat.y && feetY >= plat.y - 2;
+      if (inX && crossedFromAbove && this.vy > 0) {
         this.y = plat.y - this.radius;
-        this.vy = -Math.abs(this.vy) * this.BOUNCE;
-        if (this.vy > -2) this.vy = this.MIN_VY;
-        this.squash = 0.7;
-        return 'bounce';
+        this.vy = 0; // stop falling, wait for jump
+        this.onGround = true;
+        this.squash = 0.65; // squash on land
+        return 'land';
       }
     }
 
     // Squash/stretch animation recovery
-    this.squash += (1 - this.squash) * 0.2;
+    this.squash += (1 - this.squash) * 0.15;
     this.breathPhase += 0.04 * dt * 60;
 
     return null;
@@ -74,9 +84,9 @@ class GloryPlayer {
 
   setDirection(dir) {
     if (dir === 'left') {
-      this.vx = Math.max(-this.MAX_VX, this.vx - 4.5);
+      this.vx = Math.max(-this.MAX_VX, this.vx - 5);
     } else if (dir === 'right') {
-      this.vx = Math.min(this.MAX_VX, this.vx + 4.5);
+      this.vx = Math.min(this.MAX_VX, this.vx + 5);
     }
   }
 

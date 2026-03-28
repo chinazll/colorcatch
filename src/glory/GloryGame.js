@@ -70,8 +70,11 @@ class GloryGame {
         if (this._gameOver) this._gameOver.handleClick(cx, cy);
         return;
       }
-      // PLAYING: left/right based on canvas X midpoint
-      this.setDirection(cx < this.W / 2 ? 'left' : 'right');
+      // PLAYING: tap to jump + set left/right direction
+      if (this.player) {
+        this.player.setDirection(cx < this.W / 2 ? 'left' : 'right');
+        this.player.jump(); // Doodle Jump style: tap = jump
+      }
     }, { passive: false });
 
     this.canvas.addEventListener('click', (e) => {
@@ -84,7 +87,11 @@ class GloryGame {
         if (this._gameOver) this._gameOver.handleClick(cx, cy);
         return;
       }
-      this.setDirection(cx < this.W / 2 ? 'left' : 'right');
+      // PLAYING: click to jump
+      if (this.player) {
+        this.player.setDirection(cx < this.W / 2 ? 'left' : 'right');
+        this.player.jump();
+      }
     });
   }
 
@@ -114,13 +121,14 @@ class GloryGame {
     if (this.hud.setPlayerColor) this.hud.setPlayerColor('#BF40FF');
     this.particles = new GloryParticles();
 
-    // Initial platforms - spread below and above player for immediate bouncing
-    this.platforms.push(new GloryPlatform(50, H * 0.80, 120)); // under player
-    this.platforms.push(new GloryPlatform(W * 0.5, H * 0.62, 100));
-    this.platforms.push(new GloryPlatform(20, H * 0.46, 90));
-    this.platforms.push(new GloryPlatform(W * 0.6, H * 0.32, 100));
-    this.platforms.push(new GloryPlatform(40, H * 0.18, 110));
-    this.platforms.push(new GloryPlatform(W * 0.55, H * 0.04, 90));
+    // Initial platforms - all BELOW the player, player starts ABOVE first platform
+    // Player at H*0.78, first platform at H*0.88 (player feet just above platform)
+    this.platforms.push(new GloryPlatform(50, H * 0.88, 120)); // directly under player
+    this.platforms.push(new GloryPlatform(W * 0.45, H * 0.72, 110));
+    this.platforms.push(new GloryPlatform(20, H * 0.57, 90));
+    this.platforms.push(new GloryPlatform(W * 0.55, H * 0.43, 100));
+    this.platforms.push(new GloryPlatform(30, H * 0.28, 110));
+    this.platforms.push(new GloryPlatform(W * 0.5, H * 0.13, 90));
     // Stars on initial platforms
     for (const plat of this.platforms) {
       if (Math.random() < 0.6) {
@@ -181,15 +189,14 @@ class GloryGame {
     this._elapsedTime += dt;
 
     const event = this.player.update(dt, this.platforms);
-    if (event === 'bounce') {
+    if (event === 'land') {
       this.particles.emit(this.player.x, this.player.y, 'bounce');
     }
     this.particles.emit(this.player.x, this.player.y, 'trail');
 
-    // Camera - follows player (both up and down) with lerp smoothing
-    const targetCamY = this.player.y - this.H * 0.65;
-    this.camY += (targetCamY - this.camY) * 0.08;
-    this.camY = Math.max(0, this.camY);
+    // Camera - smooth follow player both up AND down, no floor lock
+    const targetCamY = this.player.y - this.H * 0.55;
+    this.camY += (targetCamY - this.camY) * 0.10;
 
     // Death
     if (this.player.y - this.camY > this.H + 50) {
