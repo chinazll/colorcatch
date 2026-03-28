@@ -1,7 +1,7 @@
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  base: '/colorcatch/',
+  base: './',
   publicDir: 'public',
   build: {
     outDir: 'dist',
