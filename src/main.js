@@ -310,6 +310,8 @@ function doStart() {
   };
 
   game.start();
+  // Always reset _gameOverPending on fresh start so panel doesn't flash back
+  game._gameOverPending = undefined;
   requestAnimationFrame(watchGameOver);
 }
 

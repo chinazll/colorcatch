@@ -66,6 +66,10 @@ export class Game {
 
     // Game over animation timer (frames)
     this.deathAnimTimer = 0;
+    // Anti re-collision: set to true after landing, prevents immediate re-collision
+    this.justLanded = false;
+    // Invulnerability at game start (seconds) — player can't die during this window
+    this.invulnerable = 0;
 
     this.lastTime = 0;
   }
@@ -147,6 +151,8 @@ export class Game {
     this.camY = 0;
     this.targetCamY = 0;
     this.state = STATE.PLAYING;
+    this.invulnerable = 0.5;  // 0.5s grace period at start
+    this.justLanded = false;
 
     this.lastTime = performance.now();
     requestAnimationFrame(t => this._loop(t));
@@ -238,19 +244,19 @@ export class Game {
       }
     }
 
+    // Countdown invulnerability
+    if (this.invulnerable > 0) this.invulnerable -= dt;
+
     this._handleInput();
 
     if (this.player) {
       this.player.grounded = false;
       this.player.update(dt);
       this.player.x = clamp(this.player.x, PLAYER_RADIUS, this.W - PLAYER_RADIUS);
-
-      const playerScreenY = this.player.y - this.camY;
-      if (playerScreenY > this.H + 100) {
-        this._triggerGameOver();
-        return;
-      }
     }
+
+    // Reset justLanded at the start of each physics step
+    this.justLanded = false;
 
     // Platform update & collision
     for (const plat of this.platforms) {
@@ -262,6 +268,7 @@ export class Game {
         this.player.y = plat.y - PLAYER_RADIUS;
         this.player.vy = 0;
         this.player.onLand();
+        this.justLanded = true;
         playLand();
         if (wasAbove) this._onPlatformLand(plat);
       }
@@ -292,6 +299,15 @@ export class Game {
 
     if (this.nextPlatformY > this.highestY - this.H - 400) {
       this._generatePlatformsUpTo(this.highestY - this.H - 400);
+    }
+
+    // Fell off screen — only triggers if invulnerable has expired
+    if (this.player) {
+      const playerScreenY = this.player.y - this.camY;
+      if (playerScreenY > this.H + 100 && this.invulnerable <= 0) {
+        this._triggerGameOver();
+        return;
+      }
     }
 
     this._removeLowPlatforms();

@@ -3,6 +3,8 @@
 export const LEVELS = [
   { // Level 1
     platformSpacing: [90, 120],
+    platformGapMin: 55,
+    platformGapMax: 75,
     platformWidth: [70, 100],
     crumblingRatio: 0,
     movingRatio: 0,
@@ -14,6 +16,8 @@ export const LEVELS = [
   },
   { // Level 2
     platformSpacing: [85, 115],
+    platformGapMin: 52,
+    platformGapMax: 72,
     platformWidth: [65, 95],
     crumblingRatio: 0.05,
     movingRatio: 0.05,
@@ -25,6 +29,8 @@ export const LEVELS = [
   },
   { // Level 3
     platformSpacing: [80, 110],
+    platformGapMin: 50,
+    platformGapMax: 68,
     platformWidth: [60, 90],
     crumblingRatio: 0.1,
     movingRatio: 0.08,
@@ -36,6 +42,8 @@ export const LEVELS = [
   },
   { // Level 4
     platformSpacing: [75, 105],
+    platformGapMin: 48,
+    platformGapMax: 65,
     platformWidth: [55, 85],
     crumblingRatio: 0.12,
     movingRatio: 0.1,
@@ -47,6 +55,8 @@ export const LEVELS = [
   },
   { // Level 5
     platformSpacing: [70, 100],
+    platformGapMin: 46,
+    platformGapMax: 62,
     platformWidth: [50, 80],
     crumblingRatio: 0.15,
     movingRatio: 0.12,
@@ -58,6 +68,8 @@ export const LEVELS = [
   },
   { // Level 6
     platformSpacing: [65, 95],
+    platformGapMin: 44,
+    platformGapMax: 60,
     platformWidth: [48, 75],
     crumblingRatio: 0.18,
     movingRatio: 0.15,
@@ -69,6 +81,8 @@ export const LEVELS = [
   },
   { // Level 7
     platformSpacing: [60, 88],
+    platformGapMin: 42,
+    platformGapMax: 58,
     platformWidth: [45, 70],
     crumblingRatio: 0.2,
     movingRatio: 0.18,
@@ -80,6 +94,8 @@ export const LEVELS = [
   },
   { // Level 8
     platformSpacing: [55, 82],
+    platformGapMin: 40,
+    platformGapMax: 55,
     platformWidth: [42, 65],
     crumblingRatio: 0.22,
     movingRatio: 0.2,
@@ -91,6 +107,8 @@ export const LEVELS = [
   },
   { // Level 9
     platformSpacing: [50, 75],
+    platformGapMin: 38,
+    platformGapMax: 52,
     platformWidth: [40, 60],
     crumblingRatio: 0.25,
     movingRatio: 0.22,
@@ -102,6 +120,8 @@ export const LEVELS = [
   },
   { // Level 10
     platformSpacing: [45, 68],
+    platformGapMin: 36,
+    platformGapMax: 50,
     platformWidth: [38, 55],
     crumblingRatio: 0.28,
     movingRatio: 0.25,
