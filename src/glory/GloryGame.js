@@ -104,7 +104,7 @@ class GloryGame {
   _initGame() {
     const W = this.W;
     const H = this.H;
-    this.player = new GloryPlayer(W / 2, H * 0.78);
+    this.player = new GloryPlayer(W / 2, H * 0.78, W);
     this.platforms = [];
     this.stars = [];
     this.camY = 0;
@@ -186,10 +186,10 @@ class GloryGame {
     }
     this.particles.emit(this.player.x, this.player.y, 'trail');
 
-    // Camera - only goes up
+    // Camera - follows player (both up and down) with lerp smoothing
     const targetCamY = this.player.y - this.H * 0.65;
-    this.camY += (Math.min(targetCamY, this.camY) - this.camY) * 0.08;
-    this.camY = Math.max(0, Math.min(this.camY, this.player.y - this.H * 0.3));
+    this.camY += (targetCamY - this.camY) * 0.08;
+    this.camY = Math.max(0, this.camY);
 
     // Death
     if (this.player.y - this.camY > this.H + 50) {

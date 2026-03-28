@@ -3,9 +3,10 @@
  * Elastic ball physics: GRAVITY, BOUNCE=0.95, MIN_VY=-10保证永动
  */
 class GloryPlayer {
-  constructor(x, y) {
+  constructor(x, y, W = 400) {
     this.x = x;
     this.y = y;
+    this.W = W;
     this.radius = 14;
     this.vx = 0;
     this.vy = 0; // start still, fall onto first platform under gravity
