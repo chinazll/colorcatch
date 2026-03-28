@@ -263,7 +263,8 @@ export class Game {
       if (!plat.alive) continue;
       plat.update(dt, this.W);
 
-      if (this.player && plat.landsOn(this.player.x, this.player.y, PLAYER_RADIUS, this.player.vy)) {
+      if (this.player && !this.justLanded &&
+          plat.landsOn(this.player.x, this.player.y, PLAYER_RADIUS, this.player.vy)) {
         const wasAbove = this.player.y < plat.y;
         this.player.y = plat.y - PLAYER_RADIUS;
         this.player.vy = 0;

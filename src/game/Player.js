@@ -78,8 +78,8 @@ export class Player {
     // Physics (use fixed step to match Game.js dt)
     if (!this.onGround && !this.grounded) {
       this.vy += GRAVITY * 60 * dt;
+      this.vx *= Math.pow(FRICTION, 60 * dt);
     }
-    this.vx *= Math.pow(FRICTION, 60 * dt);
     this.x += this.vx;
     this.y += this.vy;
 
