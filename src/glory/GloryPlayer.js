@@ -48,7 +48,7 @@ class GloryPlayer {
       if (!plat) continue;
       const inX = this.x + this.radius > plat.x && this.x - this.radius < plat.x + plat.width;
       const atSurface = feetY >= plat.y && prevFeetY <= plat.y + 2;
-      if (inX && atSurface) {
+      if (inX && atSurface && this.vy > 0) {
         this.y = plat.y - this.radius;
         this.vy = Math.max(this.MIN_VY, -Math.abs(this.vy) * this.BOUNCE);
         this.squash = 0.7;
