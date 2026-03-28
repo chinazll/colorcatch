@@ -5,14 +5,17 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
   <title>Color Catch - 糖果跳跳乐</title>
   <link rel="manifest" href="./manifest.json" />
-  <meta name="theme-color" content="#FF6B6B" />
+  <meta name="theme-color" content="#FF6B9D" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="default" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;700;800;900&display=swap" rel="stylesheet" />
 </head>
 <body>
   <canvas id="c"></canvas>
-  <div id="ui-overlay" class="active">
+  <div id="ui-overlay">
+    <!-- Start Menu -->
     <div id="start-panel" class="panel visible">
       <h1>Color Catch</h1>
       <h2>糖果跳跳乐</h2>
@@ -20,14 +23,15 @@
       <button class="btn btn-primary" id="start-btn">开始游戏</button>
       <div class="instructions">← → 移动 &nbsp;|&nbsp; 匹配颜色得分</div>
     </div>
+    <!-- Game Over -->
     <div id="over-panel" class="panel">
       <h2>游戏结束</h2>
       <div class="score-display" id="final-score">0</div>
-      <p>最终得分</p>
+      <p>最高纪录</p>
       <button class="btn btn-secondary" id="restart-btn">再来一次</button>
     </div>
-    <div id="combo-el" class="combo-text"></div>
   </div>
+  <div id="combo-el"></div>
   <script type="module" src="./src/main.js"></script>
 </body>
 </html>
