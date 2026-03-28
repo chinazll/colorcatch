@@ -118,6 +118,7 @@ export class Game {
   _handleJump() {
     if (performance.now() < this._jumpEnabledTime) return;
     if (this.player && this.player.jump()) {
+      this._jumpEnabledTime = performance.now() + 150; // reset cooldown after each jump
       playJump();
       this.ps.emit(this.player.x, this.player.y + PLAYER_RADIUS, 'jump', null, 10);
     }
