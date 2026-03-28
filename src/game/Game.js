@@ -155,15 +155,29 @@ export class Game {
   _generateInitialPlatforms() {
     this.platforms = [];
     this.nextPlatformY = this.H - 40;
+    // First platform: fixed color (red=COLOR_KEYS[0]), wide, centered, NEVER crumbles
     const first = new Platform(
-      this.W / 2 - 60,
+      this.W / 2 - 70,
       this.nextPlatformY,
-      120,
-      randPick(COLOR_KEYS),
+      140,
+      COLOR_KEYS[0],  // always red — matches player initial color
       { type: PLATFORM_TYPES.NORMAL }
     );
     this.platforms.push(first);
-    this.nextPlatformY -= randInt(55, 75);
+
+    // Second platform: same color, small gap so player can always reach it on first jump
+    this.nextPlatformY -= 55;  // small, guaranteed-reachable jump
+    const second = new Platform(
+      this.W / 2 - 50,
+      this.nextPlatformY,
+      100,
+      COLOR_KEYS[0],  // same color — player lands safely
+      { type: PLATFORM_TYPES.NORMAL }
+    );
+    this.platforms.push(second);
+
+    // Now generate the rest
+    this.nextPlatformY -= randInt(55, 70);
     this._generatePlatformsUpTo(this.H + 800);
   }
 

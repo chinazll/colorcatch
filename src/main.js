@@ -264,25 +264,30 @@ function injectPhase2UI() {
 }
 
 // ── Game over polling ───────────────────────────────────────────────
+// ── Game over polling — keeps running across multiple games ───────────
 function watchGameOver() {
-  if (!game) return;
+  if (!game) {
+    requestAnimationFrame(watchGameOver);
+    return;
+  }
   if (game._gameOverPending !== undefined) {
     finalScore.textContent = Math.floor(game._gameOverPending);
     overPanel.classList.add('visible');
     startPanel.classList.remove('visible');
-    // Show achievements
     const achs = storage.getAchievements();
-    const recentUnlocks = Object.values(achs).filter(a => a.unlockedAt === new Date().toISOString().split('T')[0]);
+    const today = new Date().toISOString().split('T')[0];
+    const recentUnlocks = Object.values(achs).filter(a => a.unlockedAt === today);
     if (recentUnlocks.length > 0) {
       setTimeout(() => showAchievementUnlock(recentUnlocks), 800);
     }
-    // Show task completion
     const tasks = storage.getDailyTasks();
     const completed = tasks.find(t => t.completed && t.progress === t.target);
     if (completed) {
       setTimeout(() => showTaskComplete(completed), 1200);
     }
+    // Keep polling for next game over (don't stop!)
     game._gameOverPending = null;
+    requestAnimationFrame(watchGameOver);
     return;
   }
   requestAnimationFrame(watchGameOver);
