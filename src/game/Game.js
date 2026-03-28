@@ -18,7 +18,7 @@ import { Storage } from './Storage.js';
 const CANVAS_W = 400;
 const CANVAS_H = 640;
 const GRAVITY = 0.38;
-const CAM_LERP = 0.1;
+const CAM_LERP = 0.35;
 const PLAYER_SCREEN_RATIO = 0.6;
 const COMBO_WINDOW = 2.0;
 
@@ -148,8 +148,8 @@ export class Game {
       first.colorKey
     );
 
-    this.camY = 0;
-    this.targetCamY = 0;
+    this.camY = this.player.y - this.H * PLAYER_SCREEN_RATIO;  // start at player screen ratio
+    this.targetCamY = this.camY;
     this.state = STATE.PLAYING;
     this.invulnerable = 0.5;  // 0.5s grace period at start
     this.justLanded = false;
@@ -292,8 +292,7 @@ export class Game {
       // Camera floor: never scrolls below starting view (keeps ground visible)
       this.targetCamY = Math.min(this.targetCamY, 0);
       // Always lerp toward target — smooth in both directions
-      const lerpFactor = (this.targetCamY < this.camY) ? CAM_LERP : 0.1;
-      this.camY = lerp(this.camY, this.targetCamY, lerpFactor);
+      this.camY = lerp(this.camY, this.targetCamY, CAM_LERP);
       if (this.player.y < this.highestY) this.highestY = this.player.y;
     }
 
