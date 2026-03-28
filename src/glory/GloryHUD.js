@@ -55,18 +55,7 @@ class GloryHUD {
       ctx.restore();
     }
 
-    // DEBUG: show player world position, camY, vy (bottom-left)
-    if (this.debug) {
-      ctx.save();
-      ctx.font = '12px monospace';
-      ctx.fillStyle = 'rgba(255,100,100,0.9)';
-      ctx.shadowBlur = 0;
-      ctx.fillText('py:' + Math.round(this.debug.playerY), 8, H - 48);
-      ctx.fillText('cam:' + Math.round(this.debug.camY), 8, H - 36);
-      ctx.fillText('vy:' + (this.debug.vy || 0).toFixed(1), 8, H - 24);
-      ctx.fillText('ground:' + !!this.debug.onGround, 8, H - 12);
-      ctx.restore();
-    }
+
   }
 }
 export { GloryHUD };

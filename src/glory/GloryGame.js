@@ -70,11 +70,8 @@ class GloryGame {
         if (this._gameOver) this._gameOver.handleClick(cx, cy);
         return;
       }
-      // PLAYING: tap to jump + set left/right direction
-      if (this.player) {
-        this.player.setDirection(cx < this.W / 2 ? 'left' : 'right');
-        this.player.jump(); // Doodle Jump style: tap = jump
-      }
+      // PLAYING: tap = left/right direction only (auto-bounce handles jumping)
+      if (this.player) this.player.setDirection(cx < this.W / 2 ? 'left' : 'right');
     }, { passive: false });
 
     this.canvas.addEventListener('click', (e) => {
@@ -87,11 +84,8 @@ class GloryGame {
         if (this._gameOver) this._gameOver.handleClick(cx, cy);
         return;
       }
-      // PLAYING: click to jump
-      if (this.player) {
-        this.player.setDirection(cx < this.W / 2 ? 'left' : 'right');
-        this.player.jump();
-      }
+      // PLAYING: click = left/right direction (auto-bounce handles jumping)
+      if (this.player) this.player.setDirection(cx < this.W / 2 ? 'left' : 'right');
     });
   }
 
@@ -121,14 +115,15 @@ class GloryGame {
     if (this.hud.setPlayerColor) this.hud.setPlayerColor('#BF40FF');
     this.particles = new GloryParticles();
 
-    // Initial platforms - all BELOW the player, player starts ABOVE first platform
-    // Player at H*0.78, first platform at H*0.88 (player feet just above platform)
-    this.platforms.push(new GloryPlatform(50, H * 0.88, 120)); // directly under player
-    this.platforms.push(new GloryPlatform(W * 0.45, H * 0.72, 110));
-    this.platforms.push(new GloryPlatform(20, H * 0.57, 90));
-    this.platforms.push(new GloryPlatform(W * 0.55, H * 0.43, 100));
-    this.platforms.push(new GloryPlatform(30, H * 0.28, 110));
-    this.platforms.push(new GloryPlatform(W * 0.5, H * 0.13, 90));
+    // Initial platforms - player starts ON first platform, others above
+    // Player at y=H*0.78, first platform top at y=H*0.78 (feet rest on it)
+    const playerFeetY = H * 0.78 + this.player.radius; // = H*0.78 + 14
+    this.platforms.push(new GloryPlatform(50, playerFeetY, 120));    // first platform - player rests here
+    this.platforms.push(new GloryPlatform(W * 0.45, playerFeetY - 90, 110));
+    this.platforms.push(new GloryPlatform(20, playerFeetY - 170, 90));
+    this.platforms.push(new GloryPlatform(W * 0.55, playerFeetY - 250, 100));
+    this.platforms.push(new GloryPlatform(30, playerFeetY - 330, 110));
+    this.platforms.push(new GloryPlatform(W * 0.5, playerFeetY - 410, 90));
     // Stars on initial platforms
     for (const plat of this.platforms) {
       if (Math.random() < 0.6) {
@@ -194,20 +189,20 @@ class GloryGame {
     }
     this.particles.emit(this.player.x, this.player.y, 'trail');
 
-    // Camera - smooth follow player both up AND down, no floor lock
-    const targetCamY = this.player.y - this.H * 0.55;
-    this.camY += (targetCamY - this.camY) * 0.10;
+    // Camera - Doodle Jump style: only follow player UP, never down
+    // Track the maximum camera position (highest point reached)
+    const playerScreenY = this.player.y - this.camY;
+    // Only move camera up when player is in upper 40% of screen
+    if (playerScreenY < this.H * 0.45) {
+      const targetCamY = this.player.y - this.H * 0.45;
+      if (targetCamY > this.camY) {
+        this.camY += (targetCamY - this.camY) * 0.15;
+      }
+    }
+    // Camera never moves down - this is the key Doodle Jump mechanic
 
-    // DEBUG: update HUD with player state
-    this.hud.setDebug({
-      playerY: this.player.y,
-      camY: this.camY,
-      vy: this.player.vy,
-      onGround: this.player.onGround
-    });
-
-    // Death: player falls 200px below visible screen
-    if (this.player.y - this.camY > this.H + 200) {
+    // Death: player falls below visible screen (below camera)
+    if (this.player.y > this.camY + this.H + 100) {
       this.triggerGameOver();
       return;
     }
