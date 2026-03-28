@@ -25,6 +25,12 @@ class GloryPlayer {
     this.trail.push({ x: this.x, y: this.y });
     if (this.trail.length > 12) this.trail.shift();
 
+    // Clamp dt to avoid physics explosion on tab-switch or lag frames
+    dt = Math.min(dt, 0.05);
+
+    // Capture position BEFORE this frame's physics update
+    const prevY = this.y;
+
     // Gravity
     this.vy += this.GRAVITY * dt * 60;
 
@@ -40,17 +46,20 @@ class GloryPlayer {
     if (this.x < this.radius) { this.x = this.radius; this.vx = Math.abs(this.vx); }
     if (this.x > W - this.radius) { this.x = W - this.radius; this.vx = -Math.abs(this.vx); }
 
-    // Platform collision - check position-based collision regardless of direction
-    // If player's feet cross the platform surface from above, trigger bounce
-    const feetY = this.y + this.radius;
-    const prevFeetY = feetY - this.vy; // previous frame feet position
+    // Platform collision - only when player's feet CROSS the platform surface from ABOVE
+    // prevFeetY: feet position BEFORE this frame's physics
+    // curFeetY: feet position AFTER this frame's physics
+    const prevFeetY = prevY + this.radius;
+    const curFeetY = this.y + this.radius;
     for (const plat of platforms) {
       if (!plat) continue;
       const inX = this.x + this.radius > plat.x && this.x - this.radius < plat.x + plat.width;
-      const atSurface = feetY >= plat.y && prevFeetY <= plat.y + 2;
-      if (inX && atSurface && this.vy > 0) {
+      // Collision: prev feet were ABOVE platform, cur feet are AT or BELOW platform top
+      const crossedFromAbove = prevFeetY < plat.y && curFeetY >= plat.y;
+      if (inX && crossedFromAbove) {
         this.y = plat.y - this.radius;
-        this.vy = Math.max(this.MIN_VY, -Math.abs(this.vy) * this.BOUNCE);
+        this.vy = -Math.abs(this.vy) * this.BOUNCE;
+        if (this.vy > -2) this.vy = this.MIN_VY;
         this.squash = 0.7;
         return 'bounce';
       }
