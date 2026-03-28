@@ -73,7 +73,7 @@ export class Platform {
     if (!this.alive) return false;
     const prevBottom = y + r - vy;
     const curBottom = y + r;
-    return vy >= 0 &&
+    return vy > 0 &&
       prevBottom <= this.y + 2 &&
       curBottom >= this.y &&
       x + r > this.x &&
