@@ -98,8 +98,6 @@ export class Game {
       dragging = true;
       dragStartX = (e.touches[0].clientX - rect.left) * scaleX;
       if (this.player) playerStartX = this.player.x;
-      // 按下立即跳（防误触用 _jumpEnabledTime）
-      if (this.state === STATE.PLAYING) this._handleJump();
     }, { passive: false });
     this.canvas.addEventListener('touchmove', e => {
       e.preventDefault();
@@ -112,6 +110,8 @@ export class Game {
     this.canvas.addEventListener('touchend', e => {
       e.preventDefault();
       dragging = false;
+      // 跳在松手触发（配合 _jumpEnabledTime 防止误触）
+      if (this.state === STATE.PLAYING) this._handleJump();
     }, { passive: false });
   }
 
