@@ -277,9 +277,12 @@ function watchGameOver() {
     const achs = storage.getAchievements();
     const today = new Date().toISOString().split('T')[0];
     const recentUnlocks = Object.values(achs).filter(a => a.unlockedAt === today);
-    if (recentUnlocks.length > 0) {
-      setTimeout(() => showAchievementUnlock(recentUnlocks), 800);
+    // Only show achievements that were JUST unlocked this game (via _newAchievements)
+    const newAchs = (game._newAchievements || []).filter(a => a.unlockedAt === today);
+    if (newAchs.length > 0) {
+      setTimeout(() => showAchievementUnlock(newAchs), 800);
     }
+    game._newAchievements = [];  // clear after showing
     const tasks = storage.getDailyTasks();
     const completed = tasks.find(t => t.completed && t.progress === t.target);
     if (completed) {

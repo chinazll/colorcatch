@@ -111,6 +111,7 @@ export class Game {
   }
 
   _handleJump() {
+    if (performance.now() < this._jumpEnabledTime) return;
     if (this.player && this.player.jump()) {
       playJump();
       this.ps.emit(this.player.x, this.player.y + PLAYER_RADIUS, 'jump', null, 10);
@@ -153,6 +154,7 @@ export class Game {
     this.state = STATE.PLAYING;
     this.invulnerable = 0.5;  // 0.5s grace period at start
     this.justLanded = false;
+    this._jumpEnabledTime = performance.now() + 150;  // block touch jump for first 150ms
 
     this.lastTime = performance.now();
     requestAnimationFrame(t => this._loop(t));
@@ -361,11 +363,12 @@ export class Game {
     if (this.player) this.player.dead = true;
     this.state = STATE.GAME_OVER;
     this.deathAnimTimer = 0;
-    // Persist score & achievements via Storage
-    this.storage.onGameEnd(this.score, this.combo);
+    // Persist score & achievements via Storage — capture newly unlocked
+    const { unlocked } = this.storage.onGameEnd(this.score, this.combo);
     this.hud.refreshFromStorage();
-    // Signal main.js to show over panel
+    // Signal main.js to show over panel + only NEW achievements
     this._gameOverPending = this.score;
+    this._newAchievements = unlocked || [];
     if (this.onGameOver) this.onGameOver(this.score);
   }
 
