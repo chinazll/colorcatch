@@ -28,7 +28,6 @@ class GloryGame {
     this._gameOverPending = undefined;
     this.onGameOver = null;
     this._lastTime = 0;
-    this._direction = null;
     this._lastDirTime = 0;
     this.background = new GloryBackground();
     this.hud = new GloryHUD();
@@ -40,69 +39,52 @@ class GloryGame {
     this._gameOver = null;
     this._elapsedTime = 0;
 
+    // Hide old HTML overlay immediately so it doesn't block canvas
+    const overlay = document.getElementById('ui-overlay');
+    if (overlay) overlay.style.display = 'none';
+
     this._bindInput();
     this._loop(0);
   }
 
   _bindInput() {
-    const handleTap = (clientX) => {
-      if (this.state === 'MENU') {
-        const rect = this.canvas.getBoundingClientRect();
-        const scaleX = this.W / rect.width;
-        const cx = (clientX - rect.left) * scaleX;
-        this._menu.handleClick(cx, cx); // approximate - needs fixing
-        return;
-      }
-      if (this.state === 'GAME_OVER') {
-        const rect = this.canvas.getBoundingClientRect();
-        const scaleX = this.W / rect.width;
-        const cx = (clientX - rect.left) * scaleX;
-        if (this._gameOver) this._gameOver.handleClick(cx, cx);
-        return;
-      }
-      if (this.state === 'PLAYING') {
-        // Left/right tap
-        const mid = window.innerWidth / 2;
-        this.setDirection(clientX < mid ? 'left' : 'right');
-      }
+    const getCoords = (e, src) => {
+      const rect = this.canvas.getBoundingClientRect();
+      const x = src.clientX - rect.left;
+      const y = src.clientY - rect.top;
+      return {
+        cx: x * (this.W / rect.width),
+        cy: y * (this.H / rect.height)
+      };
     };
 
     this.canvas.addEventListener('touchstart', (e) => {
       e.preventDefault();
       const touch = e.touches[0];
+      const { cx, cy } = getCoords(e, touch);
       if (this.state === 'MENU') {
-        const rect = this.canvas.getBoundingClientRect();
-        const cx = (touch.clientX - rect.left) * (this.W / rect.width);
-        const cy = (touch.clientY - rect.top) * (this.H / rect.height);
         this._menu.handleClick(cx, cy);
         return;
       }
       if (this.state === 'GAME_OVER') {
-        const rect = this.canvas.getBoundingClientRect();
-        const cx = (touch.clientX - rect.left) * (this.W / rect.width);
-        const cy = (touch.clientY - rect.top) * (this.H / rect.height);
         if (this._gameOver) this._gameOver.handleClick(cx, cy);
         return;
       }
-      const mid = window.innerWidth / 2;
-      this.setDirection(touch.clientX < mid ? 'left' : 'right');
+      // PLAYING: left/right based on canvas X midpoint
+      this.setDirection(cx < this.W / 2 ? 'left' : 'right');
     }, { passive: false });
 
     this.canvas.addEventListener('click', (e) => {
+      const { cx, cy } = getCoords(e, e);
       if (this.state === 'MENU') {
-        const rect = this.canvas.getBoundingClientRect();
-        const cx = (e.clientX - rect.left) * (this.W / rect.width);
-        const cy = (e.clientY - rect.top) * (this.H / rect.height);
         this._menu.handleClick(cx, cy);
         return;
       }
       if (this.state === 'GAME_OVER') {
-        const rect = this.canvas.getBoundingClientRect();
-        const cx = (e.clientX - rect.left) * (this.W / rect.width);
-        const cy = (e.clientY - rect.top) * (this.H / rect.height);
         if (this._gameOver) this._gameOver.handleClick(cx, cy);
         return;
       }
+      this.setDirection(cx < this.W / 2 ? 'left' : 'right');
     });
   }
 
@@ -122,40 +104,43 @@ class GloryGame {
   _initGame() {
     const W = this.W;
     const H = this.H;
-    this.player = new GloryPlayer(W / 2, H * 0.6);
+    this.player = new GloryPlayer(W / 2, H * 0.78);
     this.platforms = [];
     this.stars = [];
     this.camY = 0;
     this.score = 0;
     this._elapsedTime = 0;
     this.hud = new GloryHUD();
-    this.hud.setPlayerColor && this.hud.setPlayerColor('#BF40FF');
+    if (this.hud.setPlayerColor) this.hud.setPlayerColor('#BF40FF');
     this.particles = new GloryParticles();
 
-    // Initial platforms
-    for (let i = 0; i < 8; i++) {
-      this._generatePlatform(H * 0.7 + i * (H * 0.2));
+    // Initial platforms - spread below and above player for immediate bouncing
+    this.platforms.push(new GloryPlatform(50, H * 0.78, 120)); // under player
+    this.platforms.push(new GloryPlatform(W * 0.5, H * 0.60, 100));
+    this.platforms.push(new GloryPlatform(20, H * 0.44, 90));
+    this.platforms.push(new GloryPlatform(W * 0.6, H * 0.30, 100));
+    this.platforms.push(new GloryPlatform(40, H * 0.16, 110));
+    this.platforms.push(new GloryPlatform(W * 0.55, H * 0.02, 90));
+    // Stars on initial platforms
+    for (const plat of this.platforms) {
+      if (Math.random() < 0.6) {
+        this.stars.push(new GloryStar(plat.x + plat.width / 2, plat.y - 30));
+      }
     }
   }
 
   _generatePlatform(yPos) {
     const W = this.W;
     const difficulty = GloryLevels.getDifficulty(this._elapsedTime);
-    const width = difficulty.platformWidth[0] + Math.random() * (difficulty.platformWidth[1] - difficulty.platformWidth[0]);
-    const x = 20 + Math.random() * (W - 40 - width);
-    const plat = new GloryPlatform(x, yPos, width);
+    const w = difficulty.platformWidth[0] + Math.random() * (difficulty.platformWidth[1] - difficulty.platformWidth[0]);
+    const x = 20 + Math.random() * (W - 40 - w);
+    const plat = new GloryPlatform(x, yPos, w);
     this.platforms.push(plat);
 
-    // Star on platform
     if (Math.random() < difficulty.starDensity) {
-      const starX = x + width / 2 + (Math.random() - 0.5) * 40;
-      const starY = yPos - 30 - Math.random() * 30;
-      this.stars.push(new GloryStar(starX, starY));
+      this.stars.push(new GloryStar(x + w / 2, yPos - 30 - Math.random() * 30));
       if (Math.random() < 0.2) {
-        this.stars.push(new GloryStar(
-          x + width / 2 + (Math.random() - 0.5) * 60,
-          yPos - 40 - Math.random() * 20
-        ));
+        this.stars.push(new GloryStar(x + w / 2 + (Math.random() - 0.5) * 60, yPos - 40 - Math.random() * 20));
       }
     }
   }
@@ -169,8 +154,12 @@ class GloryGame {
     if (this.score > parseInt(hs)) localStorage.setItem('glory_highscore', this.score);
     this._gameOver = new GloryGameOver(
       this.score,
-      () => this._initGame() || (this.state = 'PLAYING'),
-      () => this.state = 'MENU'
+      () => { this._initGame(); this.state = 'PLAYING'; },
+      () => {
+        this.state = 'MENU';
+        const overlay = document.getElementById('ui-overlay');
+        if (overlay) overlay.style.display = '';
+      }
     );
   }
 
@@ -191,39 +180,35 @@ class GloryGame {
 
     this._elapsedTime += dt;
 
-    // Update player
     const event = this.player.update(dt, this.platforms);
     if (event === 'bounce') {
       this.particles.emit(this.player.x, this.player.y, 'bounce');
     }
-
-    // Trail
     this.particles.emit(this.player.x, this.player.y, 'trail');
 
-    // Camera - only goes up, never down
+    // Camera - only goes up
     const targetCamY = this.player.y - this.H * 0.65;
     this.camY += (Math.min(targetCamY, this.camY) - this.camY) * 0.08;
     this.camY = Math.max(0, Math.min(this.camY, this.player.y - this.H * 0.3));
 
-    // Death check
+    // Death
     if (this.player.y - this.camY > this.H + 50) {
       this.triggerGameOver();
       return;
     }
 
     // Generate platforms ahead
-    const difficulty = GloryLevels.getDifficulty(this._elapsedTime);
     while (this.platforms.length < 8) {
-      const topPlat = this.platforms.reduce((min, p) => p.y < min.y ? p : min, this.platforms[0]);
+      const topPlat = this.platforms.reduce((m, p) => p.y < m.y ? p : m, this.platforms[0]);
+      const difficulty = GloryLevels.getDifficulty(this._elapsedTime);
       const gap = difficulty.gap[0] + Math.random() * (difficulty.gap[1] - difficulty.gap[0]);
       this._generatePlatform(topPlat.y - gap);
     }
 
-    // Update & cull stars
+    // Stars
     for (const star of this.stars) {
       star.update(dt);
-      if (star.collected && star.collectTimer > 15) continue;
-      if (star.collidesWith(this.player) && !star.collected) {
+      if (!star.collected && star.collidesWith(this.player)) {
         star.collect();
         this.score += 10;
         this.hud.setScore(this.score);
@@ -232,15 +217,11 @@ class GloryGame {
     }
     this.stars = this.stars.filter(s => {
       if (s.collected && s.collectTimer > 15) return false;
-      const sy = s.y - this.camY;
-      return sy > -100 && sy < this.H + 200;
+      return (s.y - this.camY) > -100 && (s.y - this.camY) < this.H + 200;
     });
 
-    // Cull platforms
-    this.platforms = this.platforms.filter(p => {
-      return p.y - this.camY < this.H + 200;
-    });
-
+    // Cull
+    this.platforms = this.platforms.filter(p => (p.y - this.camY) < this.H + 200);
     this.particles.update(dt);
     this.hud.update(dt);
   }
@@ -248,7 +229,7 @@ class GloryGame {
   _render() {
     const ctx = this.ctx;
     ctx.clearRect(0, 0, this.W, this.H);
-    this.background.draw(ctx, 0); // background is fixed
+    this.background.draw(ctx, 0);
 
     if (this.state === 'MENU') {
       this._menu.draw(ctx);
@@ -257,29 +238,14 @@ class GloryGame {
 
     ctx.save();
     ctx.translate(0, -this.camY);
-
-    // Platforms
     for (const p of this.platforms) p.draw(ctx, this.camY);
-
-    // Stars
     for (const s of this.stars) s.draw(ctx, this.camY);
-
-    // Player
     if (this.player) this.player.draw(ctx, this.camY);
-
-    // Particles
     this.particles.draw(ctx, this.camY);
-
     ctx.restore();
 
-    // HUD (screen space)
-    if (this.state === 'PLAYING') {
-      this.hud.draw(ctx);
-    }
-
-    if (this.state === 'GAME_OVER') {
-      if (this._gameOver) this._gameOver.draw(ctx);
-    }
+    if (this.state === 'PLAYING') this.hud.draw(ctx);
+    if (this.state === 'GAME_OVER' && this._gameOver) this._gameOver.draw(ctx);
   }
 }
 export { GloryGame };

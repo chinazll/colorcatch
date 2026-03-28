@@ -39,19 +39,19 @@ class GloryPlayer {
     if (this.x < this.radius) { this.x = this.radius; this.vx = Math.abs(this.vx); }
     if (this.x > W - this.radius) { this.x = W - this.radius; this.vx = -Math.abs(this.vx); }
 
-    // Platform collision (top only, falling)
-    if (this.vy > 0) {
-      for (const plat of platforms) {
-        if (!plat) continue;
-        const inX = this.x + this.radius > plat.x && this.x - this.radius < plat.x + plat.width;
-        const atTop = this.y + this.radius >= plat.y && this.y + this.radius <= plat.y + 18;
-        if (inX && atTop) {
-          this.y = plat.y - this.radius;
-          // BOUNCE=0.95保证永不停止, MIN_VY=-10保证最低弹起速度
-          this.vy = Math.max(this.MIN_VY, -Math.abs(this.vy) * this.BOUNCE);
-          this.squash = 0.7;
-          return 'bounce';
-        }
+    // Platform collision - check position-based collision regardless of direction
+    // If player's feet cross the platform surface from above, trigger bounce
+    const feetY = this.y + this.radius;
+    const prevFeetY = feetY - this.vy; // previous frame feet position
+    for (const plat of platforms) {
+      if (!plat) continue;
+      const inX = this.x + this.radius > plat.x && this.x - this.radius < plat.x + plat.width;
+      const atSurface = feetY >= plat.y && prevFeetY <= plat.y + 2;
+      if (inX && atSurface) {
+        this.y = plat.y - this.radius;
+        this.vy = Math.max(this.MIN_VY, -Math.abs(this.vy) * this.BOUNCE);
+        this.squash = 0.7;
+        return 'bounce';
       }
     }
 
