@@ -271,6 +271,16 @@ function watchGameOver() {
     return;
   }
   if (game._gameOverPending !== undefined) {
+    const reason = game._deathReason || 'fallen';
+    const reasonText = reason === 'wrong_color'
+      ? '颜色不匹配！跳之前看清楚球的颜色'
+      : '掉下去了，下次别松手太快！';
+    const reasonHtml = `<div style="color:#FF6B6B;font-size:13px;margin-bottom:8px;">❌ ${reasonText}</div>`;
+    const scoreDisplay = overPanel.querySelector('.score-display');
+    if (scoreDisplay && !overPanel.querySelector('.death-reason')) {
+      scoreDisplay.insertAdjacentHTML('beforebegin', reasonHtml);
+      scoreDisplay.previousElementSibling.classList.add('death-reason');
+    }
     finalScore.textContent = Math.floor(game._gameOverPending);
     overPanel.classList.add('visible');
     startPanel.classList.remove('visible');
@@ -315,6 +325,10 @@ function doStart() {
   game.start();
   // Always reset _gameOverPending on fresh start so panel doesn't flash back
   game._gameOverPending = undefined;
+  game._wrongColor = undefined;
+  // Remove stale death reason from previous game
+  const staleReason = overPanel.querySelector('.death-reason');
+  if (staleReason) staleReason.remove();
   requestAnimationFrame(watchGameOver);
 }
 

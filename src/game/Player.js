@@ -6,7 +6,7 @@ import { drawStar } from '../utils/utils.js';
 
 const W = 400, H = 640;
 const GRAVITY = 0.38;
-const JUMP_SPEED = -11;
+const JUMP_SPEED = -14;
 const FRICTION = 0.88;
 const MOVE_SPEED = 4;
 const PLAYER_R = 18;
@@ -36,6 +36,11 @@ export class Player {
     this.trailTimer = 0;
     this.dead = false;
     this.skin = 'default';
+    this.colorFlashTimer = 0; // 颜色变化闪烁计时器
+  }
+
+  flashColor() {
+    this.colorFlashTimer = 12; // 约 0.2 秒闪烁
   }
 
   setColor(colorKey) {
@@ -124,6 +129,31 @@ export class Player {
     ctx.save();
     ctx.translate(this.x, drawY);
     ctx.scale(this.scaleX, this.scaleY);
+
+    // 玩家球金色高亮光环
+    ctx.save();
+    ctx.globalAlpha = 0.5;
+    ctx.shadowColor = '#FFD166';
+    ctx.shadowBlur = 18;
+    ctx.beginPath();
+    ctx.arc(0, 0, this.radius + 5, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,209,102,0.25)';
+    ctx.fill();
+    ctx.restore();
+
+    // 变色闪烁效果
+    if (this.colorFlashTimer > 0) {
+      ctx.save();
+      ctx.shadowColor = '#FFFFFF';
+      ctx.shadowBlur = 30;
+      ctx.globalAlpha = this.colorFlashTimer / 12 * 0.8;
+      ctx.beginPath();
+      ctx.arc(0, 0, this.radius + 8, 0, Math.PI * 2);
+      ctx.fillStyle = '#FFFFFF';
+      ctx.fill();
+      ctx.restore();
+      this.colorFlashTimer--;
+    }
 
     // Body gradient
     const grad = ctx.createRadialGradient(-4, -4, 2, 0, 0, this.radius);

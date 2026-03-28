@@ -19,7 +19,7 @@ const CANVAS_W = 400;
 const CANVAS_H = 640;
 const GRAVITY = 0.38;
 const CAM_LERP = 0.35;
-const PLAYER_SCREEN_RATIO = 0.6;
+const PLAYER_SCREEN_RATIO = 0.45;
 const COMBO_WINDOW = 2.0;
 
 // ── Game state ─────────────────────────────────────────────────────
@@ -93,20 +93,25 @@ export class Game {
     let dragging = false, dragStartX = 0, playerStartX = 0;
     this.canvas.addEventListener('touchstart', e => {
       e.preventDefault();
+      const rect = this.canvas.getBoundingClientRect();
+      const scaleX = this.W / rect.width;
       dragging = true;
-      dragStartX = e.touches[0].clientX;
+      dragStartX = (e.touches[0].clientX - rect.left) * scaleX;
       if (this.player) playerStartX = this.player.x;
+      // 按下立即跳（防误触用 _jumpEnabledTime）
+      if (this.state === STATE.PLAYING) this._handleJump();
     }, { passive: false });
     this.canvas.addEventListener('touchmove', e => {
       e.preventDefault();
       if (!dragging || !this.player || this.state !== STATE.PLAYING) return;
-      const dx = e.touches[0].clientX - dragStartX;
+      const rect = this.canvas.getBoundingClientRect();
+      const scaleX = this.W / rect.width;
+      const dx = (e.touches[0].clientX - rect.left) * scaleX - dragStartX;
       this.player.x = clamp(playerStartX + dx, PLAYER_RADIUS, this.W - PLAYER_RADIUS);
     }, { passive: false });
     this.canvas.addEventListener('touchend', e => {
       e.preventDefault();
       dragging = false;
-      if (this.state === STATE.PLAYING) this._handleJump();
     }, { passive: false });
   }
 
@@ -294,7 +299,9 @@ export class Game {
       this.targetCamY = this.player.y - targetScreenY;
       // Use flooredTarget as lerp destination (allows upward following)
       const flooredTarget = Math.min(this.targetCamY, 0);
-      this.camY = lerp(this.camY, flooredTarget, CAM_LERP);
+      // Separate lerp: downward (falling) = faster, upward = normal
+      const lerpFactor = flooredTarget < this.camY ? 0.55 : CAM_LERP;
+      this.camY = lerp(this.camY, flooredTarget, lerpFactor);
       // Hard floor: camera can never scroll below starting position
       if (this.camY > 0) this.camY = 0;
       if (this.player.y < this.highestY) this.highestY = this.player.y;
@@ -323,6 +330,7 @@ export class Game {
     const colorMatch = plat.colorKey === this.player.colorKey;
 
     if (colorMatch) {
+      this.player.flashColor(); // 触发变色闪烁
       plat.startCrumble();
       this.combo++;
       this.comboTimer = COMBO_WINDOW;
@@ -345,6 +353,7 @@ export class Game {
         this.ps.emit(this.player.x, this.player.y, 'eliminate', null, 20);
       }
     } else {
+      this._wrongColor = true; // 记录颜色不匹配
       this.ps.emit(this.player.x, this.player.y, 'eliminate', null, 20);
       this.shake.trigger(6, 0.5);
       playGameOver();
@@ -360,6 +369,14 @@ export class Game {
 
   _triggerGameOver() {
     if (this.state === STATE.GAME_OVER) return;
+    // 判断死亡原因：掉落还是颜色不匹配
+    let deathReason = 'fallen';
+    if (this.player && this.player.y > this.camY + this.H + 50) {
+      deathReason = 'fallen';
+    } else if (this._wrongColor) {
+      deathReason = 'wrong_color';
+    }
+    this._deathReason = deathReason;
     if (this.player) this.player.dead = true;
     this.state = STATE.GAME_OVER;
     this.deathAnimTimer = 0;
