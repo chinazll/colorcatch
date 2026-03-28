@@ -8,11 +8,13 @@ class GloryHUD {
     this.combo = 0;
     this.comboTimer = 0;
     this.playerColor = '#FFD700';
+    this.debug = null; // { playerY, camY, vy, onGround }
   }
 
   setScore(score) { this.score = score; }
   setCombo(c) { this.combo = c; this.comboTimer = 90; }
   setPlayerColor(color) { this.playerColor = color; }
+  setDebug(info) { this.debug = info; }
 
   update(dt) {
     if (this.comboTimer > 0) this.comboTimer -= dt * 60;
@@ -50,6 +52,19 @@ class GloryHUD {
       ctx.textAlign = 'center';
       ctx.fillText('x' + this.combo + ' COMBO!', W / 2, H - 32);
       ctx.shadowBlur = 0;
+      ctx.restore();
+    }
+
+    // DEBUG: show player world position, camY, vy (bottom-left)
+    if (this.debug) {
+      ctx.save();
+      ctx.font = '12px monospace';
+      ctx.fillStyle = 'rgba(255,100,100,0.9)';
+      ctx.shadowBlur = 0;
+      ctx.fillText('py:' + Math.round(this.debug.playerY), 8, H - 48);
+      ctx.fillText('cam:' + Math.round(this.debug.camY), 8, H - 36);
+      ctx.fillText('vy:' + (this.debug.vy || 0).toFixed(1), 8, H - 24);
+      ctx.fillText('ground:' + !!this.debug.onGround, 8, H - 12);
       ctx.restore();
     }
   }

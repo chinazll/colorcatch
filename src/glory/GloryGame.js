@@ -198,8 +198,16 @@ class GloryGame {
     const targetCamY = this.player.y - this.H * 0.55;
     this.camY += (targetCamY - this.camY) * 0.10;
 
-    // Death
-    if (this.player.y - this.camY > this.H + 50) {
+    // DEBUG: update HUD with player state
+    this.hud.setDebug({
+      playerY: this.player.y,
+      camY: this.camY,
+      vy: this.player.vy,
+      onGround: this.player.onGround
+    });
+
+    // Death: player falls 200px below visible screen
+    if (this.player.y - this.camY > this.H + 200) {
       this.triggerGameOver();
       return;
     }
