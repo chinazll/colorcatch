@@ -40,6 +40,10 @@ class GloryPlayer {
     // Clamp dt to avoid physics explosion on tab-switch / lag frames
     dt = Math.min(dt, 0.05);
 
+    // Capture position and velocity BEFORE this frame's physics
+    const prevY = this.y;
+    const vyPrev = this.vy;
+
     // Assume NOT on ground until collision proves otherwise
     this.onGround = false;
 
@@ -58,19 +62,26 @@ class GloryPlayer {
     if (this.x < this.radius) { this.x = this.radius; this.vx = Math.abs(this.vx) * 0.5; }
     if (this.x > W - this.radius) { this.x = W - this.radius; this.vx = -Math.abs(this.vx) * 0.5; }
 
-    // Platform collision - only when falling (vy > 0) and feet cross platform from above
+    // Platform collision - use ACTUAL previous frame position (prevY) and velocity (vyPrev)
     for (const plat of platforms) {
       if (!plat) continue;
       const inX = this.x + this.radius > plat.x && this.x - this.radius < plat.x + plat.width;
-      const feetY = this.y + this.radius;
-      const prevFeetY = feetY - this.vy * dt * 60;
-      // Crossed from above: prev feet above platform top, current feet at or below
-      const crossedFromAbove = prevFeetY < plat.y && feetY >= plat.y - 2;
-      if (inX && crossedFromAbove && this.vy > 0) {
+      const curFeetY = this.y + this.radius;
+      const prevFeetY = prevY + this.radius;
+
+      // CASE 1: Player crossed platform surface from above this frame (normal landing)
+      // prevFeetY was ABOVE platform top, curFeetY is AT or BELOW
+      const crossedDown = prevFeetY < plat.y && curFeetY >= plat.y;
+
+      // CASE 2: Player is already inside platform from a previous frame
+      // (safety net for high-speed falls that skip through in one frame)
+      const insidePlatform = curFeetY > plat.y && inX;
+
+      if (inX && (crossedDown || insidePlatform) && vyPrev >= 0) {
         this.y = plat.y - this.radius;
-        this.vy = 0; // stop falling, wait for jump
+        this.vy = 0;
         this.onGround = true;
-        this.squash = 0.65; // squash on land
+        this.squash = 0.65;
         return 'land';
       }
     }
