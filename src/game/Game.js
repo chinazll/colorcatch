@@ -161,6 +161,7 @@ export class Game {
     this.invulnerable = 0.5;  // 0.5s grace period at start
     this.justLanded = false;
     this._jumpEnabledTime = performance.now() + 150;  // block touch jump for first 150ms
+    this.hud.setPlayerColor(this.player.colorKey, this.player.color);  // init HUD color indicator
 
     this.lastTime = performance.now();
     requestAnimationFrame(t => this._loop(t));
@@ -343,6 +344,7 @@ export class Game {
       const cfg = LEVELS[Math.min(this.level - 1, LEVELS.length - 1)];
       const pool = COLOR_KEYS.slice(0, cfg.colorCount).filter(c => c !== plat.colorKey);
       this.player.changeColor(randPick(pool));
+      this.hud.setPlayerColor(this.player.colorKey, this.player.color);  // update HUD color indicator
 
       this.ps.emit(this.player.x, plat.y, 'score', null, 12);
 

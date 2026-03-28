@@ -32,6 +32,11 @@ export class HUD {
     this.highScore = this.storage.getHighScore();
   }
 
+  setPlayerColor(colorKey, color) {
+    this.playerColorKey = colorKey;
+    this.playerColor = color || '#FF6B6B';
+  }
+
   onScore(delta, x, y) {
     this.targetScore += delta;
     this.lastScoreDelta = delta;
@@ -127,6 +132,34 @@ export class HUD {
     ctx.font = '11px Nunito, sans-serif';
     ctx.fillStyle = 'rgba(255,255,255,0.8)';
     ctx.fillText('分数', W / 2, pillY + pillH + 3);
+
+    // ── Player color indicator (bottom of score pill) ──
+    if (this.playerColor) {
+      const cX = W / 2;
+      const cY = pillY + pillH + 22;
+      // Outer glow ring
+      ctx.save();
+      ctx.shadowColor = this.playerColor;
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.arc(cX, cY, 9, 0, Math.PI * 2);
+      ctx.fillStyle = this.playerColor;
+      ctx.fill();
+      ctx.restore();
+      // Inner shine
+      ctx.beginPath();
+      ctx.arc(cX - 2, cY - 2, 3, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      ctx.fill();
+      // White outline
+      ctx.strokeStyle = 'rgba(255,255,255,0.8)';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // Label above
+      ctx.font = '10px Nunito, sans-serif';
+      ctx.fillStyle = 'rgba(255,255,255,0.6)';
+      ctx.fillText('你的颜色', cX, pillY + pillH + 8);
+    }
 
     // ── Stars (top-left) ───────────────────────────────
     ctx.save();
