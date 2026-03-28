@@ -3,7 +3,9 @@
 // ─────────────────────────────────────────────
 
 import './style.css';
-import { Game } from './game/Game.js';
+import { GloryGame } from './glory/GloryGame.js';
+// 临时切换到荣耀糖糖（等新游戏稳定后可删除此行恢复 ColorCatch）
+// import { Game } from './game/Game.js';
 import { initAudio } from './utils/audio.js';
 import { Storage, SKINS } from './game/Storage.js';
 
@@ -314,7 +316,7 @@ function doStart() {
   injectPhase2UI();
 
   if (!game) {
-    game = new Game(canvas);
+    game = new GloryGame(canvas);
   }
 
   // Wire up game-over callback
